@@ -93,22 +93,13 @@ function updateOnTerrain(dt, input) {
   state.vx *= PHYSICS.FRICTION;
   state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
 
-  // Move along terrain
+  // Move along terrain — rider sticks to the line at all times
   state.x += state.vx * Math.cos(slope) * dt;
   const newTerrain = getTerrainAt(state.collisionData, state.x);
   state.y = newTerrain.y;
   state.rotation = newTerrain.slope;
 
-  // Check if slope is too steep → detach
-  if (newTerrain.slope < PHYSICS.DETACH_SLOPE_THRESHOLD) {
-    state.riderState = RIDER_STATES.AIRBORNE;
-    state.vy = state.vx * Math.sin(newTerrain.slope);
-    state.vx = state.vx * Math.cos(newTerrain.slope);
-    state.airTime = 0;
-    return;
-  }
-
-  // Jump input
+  // Only detach on explicit jump
   if (input.jump) {
     state.riderState = RIDER_STATES.AIRBORNE;
     state.vy = PHYSICS.JUMP_FORCE;
