@@ -11,7 +11,7 @@ import { initCamera, updateCamera } from './game/camera.js';
 import {
   initAudio, resumeAudio, startPencilLoop, stopPencilLoop,
   updatePencilVolume, startWindLoop, stopWindLoop, updateWindVolume,
-  playJump, playLandClean, playDeathSting, stopAllSounds,
+  playJump, playLandClean, playDeathSting, playWilhelmScream, stopAllSounds,
 } from './audio/soundManager.js';
 import { fetchStockData, generateSampleData } from './data/stockApi.js';
 import { initStockPicker, showError, clearError, setTickerFromURL } from './ui/stockPicker.js';
@@ -387,7 +387,11 @@ function onDeath(physicsState) {
   hideHUD();
   stopPencilLoop();
   stopWindLoop();
-  playDeathSting();
+  if (physicsState.deathCause === 'Reached the end of the line') {
+    playWilhelmScream();
+  } else {
+    playDeathSting();
+  }
 
   // Compute stats
   const priceInfo = getPriceAtX(currentTerrain.controlPoints, physicsState.x);

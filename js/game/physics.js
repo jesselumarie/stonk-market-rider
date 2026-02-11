@@ -87,8 +87,8 @@ function updateOnTerrain(dt, input) {
   const gravityAccel = -PHYSICS.GRAVITY * Math.sin(slope);
   const frictionDecel = state.vx > 0 ? -PHYSICS.GRAVITY * 0.05 : PHYSICS.GRAVITY * 0.05;
 
-  // Player speed control (up/down arrows)
-  const ACCEL_FORCE = 400;
+  // Player speed control (up/down arrows) — strong enough to climb hills
+  const ACCEL_FORCE = 1200;
   const playerAccel = (input.accel || 0) * ACCEL_FORCE;
 
   // Progressive forward push
