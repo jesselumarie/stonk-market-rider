@@ -43,6 +43,20 @@ export const STATES = {
   DEAD: 'DEAD',
 };
 
+export const DIFFICULTY = {
+  // Minimum forward speed ramps up as you progress through the terrain
+  BASE_MIN_SPEED: 30,
+  MAX_MIN_SPEED: 200,
+
+  // Constant forward push (acceleration px/s²) that increases with progress
+  SPEED_BOOST_START: 0,
+  SPEED_BOOST_END: 180,
+
+  // Landing angle tolerance tightens as you progress (radians)
+  LANDING_TOLERANCE_START: 0.4,
+  LANDING_TOLERANCE_END: 0.22,
+};
+
 export const RIDER_STATES = {
   ON_TERRAIN: 'ON_TERRAIN',
   AIRBORNE: 'AIRBORNE',

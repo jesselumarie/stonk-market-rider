@@ -1,4 +1,4 @@
-import { PHYSICS, RIDER_STATES } from '../config.js';
+import { PHYSICS, DIFFICULTY, RIDER_STATES } from '../config.js';
 import { clamp, vectorAngle, vectorMagnitude } from '../utils/math.js';
 import { getTerrainAt } from './terrain.js';
 
@@ -54,17 +54,44 @@ export function updatePhysics(dt, input) {
   return getPhysicsState();
 }
 
+function getProgress() {
+  if (state.terrainEndX <= 0) return 0;
+  return clamp(state.x / state.terrainEndX, 0, 1);
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function getDifficulty() {
+  const p = getProgress();
+  // Ease-in curve so early game is forgiving, difficulty ramps in back half
+  const curve = p * p;
+  return {
+    minSpeed: lerp(DIFFICULTY.BASE_MIN_SPEED, DIFFICULTY.MAX_MIN_SPEED, curve),
+    speedBoost: lerp(DIFFICULTY.SPEED_BOOST_START, DIFFICULTY.SPEED_BOOST_END, curve),
+    landingTolerance: lerp(DIFFICULTY.LANDING_TOLERANCE_START, DIFFICULTY.LANDING_TOLERANCE_END, curve),
+    progress: p,
+  };
+}
+
+export function getDifficultyState() {
+  return getDifficulty();
+}
+
 function updateOnTerrain(dt, input) {
   const terrain = getTerrainAt(state.collisionData, state.x);
   const slope = terrain.slope;
+  const diff = getDifficulty();
 
   // Acceleration from gravity along slope
   const gravityAccel = -PHYSICS.GRAVITY * Math.sin(slope);
   const frictionDecel = state.vx > 0 ? -PHYSICS.GRAVITY * 0.05 : PHYSICS.GRAVITY * 0.05;
 
-  state.vx += (gravityAccel + frictionDecel) * dt;
+  // Progressive forward push
+  state.vx += (gravityAccel + frictionDecel + diff.speedBoost) * dt;
   state.vx *= PHYSICS.FRICTION;
-  state.vx = clamp(state.vx, 30, PHYSICS.MAX_VELOCITY); // minimum forward speed
+  state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
 
   // Move along terrain
   state.x += state.vx * Math.cos(slope) * dt;
@@ -133,8 +160,9 @@ function handleLanding(terrain) {
   const velocityAngle = vectorAngle(state.vx, state.vy);
   const angleMismatch = Math.abs(velocityAngle - terrain.slope);
   const impactForce = Math.abs(state.vy);
+  const diff = getDifficulty();
 
-  if (angleMismatch > PHYSICS.LANDING_ANGLE_TOLERANCE || impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
+  if (angleMismatch > diff.landingTolerance || impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
     // Bad landing → death
     state.riderState = RIDER_STATES.DEAD;
     if (impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
@@ -151,7 +179,7 @@ function handleLanding(terrain) {
   state.rotation = terrain.slope;
   // Convert velocity back to terrain-following speed
   state.vx = vectorMagnitude(state.vx, state.vy) * Math.cos(terrain.slope);
-  state.vx = clamp(state.vx, 30, PHYSICS.MAX_VELOCITY);
+  state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
   state.vy = 0;
   state.airTime = 0;
 }

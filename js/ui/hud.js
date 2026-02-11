@@ -1,5 +1,14 @@
-let hudEl, tickerEl, companyEl, priceEl, dateEl, jumpHintEl;
+let hudEl, tickerEl, companyEl, priceEl, dateEl, jumpHintEl, speedLevelEl;
 let hintTimeout = null;
+
+const SPEED_TIERS = [
+  { threshold: 0,    label: 'Intern' },
+  { threshold: 0.15, label: 'Analyst' },
+  { threshold: 0.35, label: 'Associate' },
+  { threshold: 0.55, label: 'VP' },
+  { threshold: 0.75, label: 'Director' },
+  { threshold: 0.90, label: 'C-Suite' },
+];
 
 export function initHUD() {
   hudEl = document.getElementById('hud');
@@ -8,6 +17,7 @@ export function initHUD() {
   priceEl = document.getElementById('hud-price');
   dateEl = document.getElementById('hud-date');
   jumpHintEl = document.getElementById('jump-hint');
+  speedLevelEl = document.getElementById('hud-speed-level');
 }
 
 export function showHUD(ticker, companyName) {
@@ -31,7 +41,7 @@ export function hideHUD() {
   if (jumpHintEl) jumpHintEl.classList.add('hidden');
 }
 
-export function updateHUD(priceInfo) {
+export function updateHUD(priceInfo, difficulty) {
   if (!priceEl || !priceInfo) return;
 
   const priceText = `$${priceInfo.price.toFixed(2)}`;
@@ -42,5 +52,14 @@ export function updateHUD(priceInfo) {
 
   if (dateEl) {
     dateEl.textContent = priceInfo.date || '';
+  }
+
+  if (speedLevelEl && difficulty) {
+    let tier = SPEED_TIERS[0];
+    for (const t of SPEED_TIERS) {
+      if (difficulty.progress >= t.threshold) tier = t;
+    }
+    speedLevelEl.textContent = tier.label;
+    speedLevelEl.classList.toggle('fast', difficulty.progress >= 0.55);
   }
 }

@@ -5,7 +5,7 @@ import { createRiderSprites, updateRiderSprite, getRiderSprite } from './renderi
 import { createPaperOverlay, createMarginDoodles } from './rendering/effects.js';
 import { initDeathScreen, showDeathScreen, hideDeathScreen } from './rendering/deathScreen.js';
 import { buildTerrain, getTerrainAt, getPriceAtX, computeStats } from './game/terrain.js';
-import { initPhysics, updatePhysics, getPhysicsState } from './game/physics.js';
+import { initPhysics, updatePhysics, getPhysicsState, getDifficultyState } from './game/physics.js';
 import { initRider, handleInput, getJumpInput, getLeanInput, AIR_ROTATE_SPEED, getSpriteState, getRiderRotation } from './game/rider.js';
 import { initCamera, updateCamera } from './game/camera.js';
 import {
@@ -335,7 +335,7 @@ function gameLoop(timestamp) {
 
     // Update HUD
     const priceInfo = getPriceAtX(currentTerrain.controlPoints, phys.x);
-    updateHUD(priceInfo);
+    updateHUD(priceInfo, getDifficultyState());
 
     // Check for death
     if (phys.riderState === RIDER_STATES.DEAD) {
