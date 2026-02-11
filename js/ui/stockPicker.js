@@ -21,8 +21,16 @@ export async function initStockPicker(onRide) {
     const query = searchInput.value.trim();
     if (query.length === 0) {
       hideAutocomplete();
+      selectedTicker = null;
+      rideBtn.disabled = true;
+      display.textContent = '';
       return;
     }
+
+    // Always enable ride with whatever is typed
+    selectedTicker = { symbol: query.toUpperCase(), name: '' };
+    display.textContent = query.toUpperCase();
+    rideBtn.disabled = false;
 
     debouncedSearch(query, (results) => {
       currentResults = results;
@@ -33,13 +41,11 @@ export async function initStockPicker(onRide) {
 
   // Keyboard navigation
   searchInput.addEventListener('keydown', (e) => {
-    if (!autocompleteList.classList.contains('visible')) return;
-
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' && autocompleteList.classList.contains('visible')) {
       e.preventDefault();
       selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
       highlightItem(autocompleteList, selectedIndex);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && autocompleteList.classList.contains('visible')) {
       e.preventDefault();
       selectedIndex = Math.max(selectedIndex - 1, 0);
       highlightItem(autocompleteList, selectedIndex);

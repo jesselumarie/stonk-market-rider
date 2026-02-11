@@ -14,15 +14,20 @@ const SPRITE_STATES = {
 
 const SPEED_THRESHOLD_CROUCH = 400;
 const JUMP_COOLDOWN = 300; // ms
+const AIR_ROTATE_SPEED = 3.0; // radians per second
 
 let lastJumpTime = 0;
 let jumpPressed = false;
 let jumpConsumed = false;
+let leanLeft = false;
+let leanRight = false;
 
 export function initRider() {
   lastJumpTime = 0;
   jumpPressed = false;
   jumpConsumed = false;
+  leanLeft = false;
+  leanRight = false;
 }
 
 export function handleInput(event) {
@@ -31,6 +36,14 @@ export function handleInput(event) {
     jumpConsumed = false;
   } else if (event === 'jump_up') {
     jumpPressed = false;
+  } else if (event === 'lean_left_down') {
+    leanLeft = true;
+  } else if (event === 'lean_left_up') {
+    leanLeft = false;
+  } else if (event === 'lean_right_down') {
+    leanRight = true;
+  } else if (event === 'lean_right_up') {
+    leanRight = false;
   }
 }
 
@@ -43,6 +56,15 @@ export function getJumpInput(now) {
   return false;
 }
 
+export function getLeanInput() {
+  let lean = 0;
+  if (leanLeft) lean += 1;   // rotate nose up (counterclockwise)
+  if (leanRight) lean -= 1;  // rotate nose down (clockwise)
+  return lean;
+}
+
+export { AIR_ROTATE_SPEED };
+
 /**
  * Determine which sprite to show based on physics state.
  */
@@ -54,7 +76,7 @@ export function getSpriteState(physicsState) {
   }
 
   if (riderState === RIDER_STATES.AIRBORNE) {
-    return vy < 0 ? SPRITE_STATES.JUMP : SPRITE_STATES.AIR;
+    return vy > 0 ? SPRITE_STATES.JUMP : SPRITE_STATES.AIR;
   }
 
   // ON_TERRAIN

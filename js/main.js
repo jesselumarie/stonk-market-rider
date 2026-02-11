@@ -6,7 +6,7 @@ import { createPaperOverlay, createMarginDoodles } from './rendering/effects.js'
 import { initDeathScreen, showDeathScreen, hideDeathScreen } from './rendering/deathScreen.js';
 import { buildTerrain, getTerrainAt, getPriceAtX, computeStats } from './game/terrain.js';
 import { initPhysics, updatePhysics, getPhysicsState } from './game/physics.js';
-import { initRider, handleInput, getJumpInput, getSpriteState, getRiderRotation } from './game/rider.js';
+import { initRider, handleInput, getJumpInput, getLeanInput, AIR_ROTATE_SPEED, getSpriteState, getRiderRotation } from './game/rider.js';
 import { initCamera, updateCamera } from './game/camera.js';
 import {
   initAudio, resumeAudio, startPencilLoop, stopPencilLoop,
@@ -113,11 +113,23 @@ function setupInputHandlers() {
         handleInput('jump_down');
       }
     }
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      if (appState === STATES.RIDING) handleInput('lean_left_down');
+    }
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      if (appState === STATES.RIDING) handleInput('lean_right_down');
+    }
   });
 
   document.addEventListener('keyup', (e) => {
     if (e.code === 'Space' || e.key === ' ') {
       handleInput('jump_up');
+    }
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      handleInput('lean_left_up');
+    }
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      handleInput('lean_right_up');
     }
   });
 
@@ -286,8 +298,11 @@ function gameLoop(timestamp) {
       playJump();
     }
 
+    // Get lean input for air control
+    const lean = getLeanInput();
+
     // Update physics
-    const phys = updatePhysics(dt, { jump });
+    const phys = updatePhysics(dt, { jump, lean, airRotateSpeed: AIR_ROTATE_SPEED });
 
     // Detect state transitions for audio
     if (previousRiderState !== phys.riderState) {
