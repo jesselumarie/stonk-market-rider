@@ -1,5 +1,5 @@
 import { CAMERA, RENDERING } from '../config.js';
-import { lerp, clamp, standardDeviation } from '../utils/math.js';
+import { lerp, clamp } from '../utils/math.js';
 
 let cameraState = {
   x: 0,
@@ -44,7 +44,12 @@ export function updateCamera(threeCamera, riderX, riderY, controlPoints, dt, isD
     // Camera follows rider with lead
     const leadX = 150; // pixels ahead
     cameraState.x = lerp(cameraState.x, riderX + leadX, dt * 3);
-    cameraState.y = lerp(cameraState.y, riderY + RENDERING.TERRAIN_HEIGHT * CAMERA.VERTICAL_OFFSET, dt * 2);
+    // Scale vertical offset with zoom so terrain stays visible at all zoom levels
+    // At min zoom (close), offset is small; at max zoom (far), offset is larger
+    const curDistance = 1500 * cameraState.zoom;
+    const visibleHalfHeight = curDistance * Math.tan(17.5 * Math.PI / 180);
+    const verticalOffset = visibleHalfHeight * CAMERA.VERTICAL_OFFSET;
+    cameraState.y = lerp(cameraState.y, riderY + verticalOffset, dt * 2);
   }
 
   // Smooth zoom
@@ -74,20 +79,19 @@ function calculateVolatility(controlPoints, riderX) {
 
   if (lookahead.length < 2) return 0;
 
-  // Compute price changes
-  const changes = [];
-  for (let i = 1; i < lookahead.length; i++) {
-    if (lookahead[i - 1].price !== 0) {
-      changes.push((lookahead[i].price - lookahead[i - 1].price) / lookahead[i - 1].price);
-    }
+  // Use Y-range of upcoming terrain (already normalized to 0-TERRAIN_HEIGHT)
+  // This is timeframe-agnostic — works for 1-minute and daily candles alike
+  let yMin = Infinity, yMax = -Infinity;
+  for (const p of lookahead) {
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
   }
-
-  return standardDeviation(changes);
+  return (yMax - yMin) / RENDERING.TERRAIN_HEIGHT;
 }
 
 function mapVolatilityToZoom(volatility) {
-  // Higher volatility → wider zoom (camera pulls back)
-  // Typical daily volatility: 0.01-0.05
-  const normalized = clamp(volatility / 0.05, 0, 1);
+  // volatility is Y-range fraction (0 = flat, 1 = full terrain height)
+  // Flat terrain → closer camera, big swings → pull back
+  const normalized = clamp(volatility / 0.5, 0, 1);
   return lerp(CAMERA.MIN_ZOOM, CAMERA.MAX_ZOOM, normalized);
 }
