@@ -144,8 +144,8 @@ function updateAirborne(dt, input) {
 }
 
 function handleLanding(terrain) {
-  const velocityAngle = vectorAngle(state.vx, state.vy);
-  const angleMismatch = Math.abs(velocityAngle - terrain.slope);
+  // Compare rider rotation (what the player levels) against terrain slope
+  const angleMismatch = Math.abs(state.rotation - terrain.slope);
   const impactForce = Math.abs(state.vy);
   const diff = getDifficulty();
 
