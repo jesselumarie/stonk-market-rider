@@ -70,7 +70,6 @@ function getDifficulty() {
   return {
     minSpeed: lerp(DIFFICULTY.BASE_MIN_SPEED, DIFFICULTY.MAX_MIN_SPEED, curve),
     speedBoost: lerp(DIFFICULTY.SPEED_BOOST_START, DIFFICULTY.SPEED_BOOST_END, curve),
-    landingTolerance: lerp(DIFFICULTY.LANDING_TOLERANCE_START, DIFFICULTY.LANDING_TOLERANCE_END, curve),
     progress: p,
   };
 }
@@ -119,12 +118,10 @@ function updateAirborne(dt, input) {
   state.x += state.vx * dt;
   state.y += state.vy * dt;
 
-  // Air control: lean only rotates the rider for leveling, not the velocity
+  // Air control: lean rotates the rider for leveling.
+  // Rotation is fully player-controlled — it stays where you put it.
   if (input.lean && input.lean !== 0) {
     state.rotation += input.lean * input.airRotateSpeed * dt;
-  } else {
-    // Drift rotation toward velocity angle when not leaning
-    state.rotation = vectorAngle(state.vx, state.vy);
   }
 
   // Track air time
@@ -135,37 +132,34 @@ function updateAirborne(dt, input) {
     return;
   }
 
-  // Check for terrain collision
+  // Check for terrain collision — magnet: touch the line → snap on
   const terrain = getTerrainAt(state.collisionData, state.x);
   if (state.y <= terrain.y && state.vy < 0) {
-    // Landing!
     handleLanding(terrain);
   }
 }
 
 function handleLanding(terrain) {
-  // Compare rider rotation (what the player levels) against terrain slope
-  const angleMismatch = Math.abs(state.rotation - terrain.slope);
-  const impactForce = Math.abs(state.vy);
   const diff = getDifficulty();
 
-  if (angleMismatch > diff.landingTolerance || impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
-    // Bad landing → death
+  // Magnet landing: snap onto the line. Only die from extreme impact.
+  const impactForce = Math.abs(state.vy);
+  if (impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
     state.riderState = RIDER_STATES.DEAD;
-    if (impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
-      state.deathCause = 'Terminal velocity';
-    } else {
-      state.deathCause = 'Bad landing';
-    }
+    state.deathCause = 'Terminal velocity';
     return;
   }
 
-  // Clean landing → back to terrain
+  // Speed penalty for bad angle — compute before snapping rotation
+  const angleMismatch = Math.abs(state.rotation - terrain.slope);
+  const landingSpeed = vectorMagnitude(state.vx, state.vy);
+  const penalty = clamp(1 - angleMismatch * 0.8, 0.3, 1);
+
+  // Snap onto the line
   state.riderState = RIDER_STATES.ON_TERRAIN;
   state.y = terrain.y;
   state.rotation = terrain.slope;
-  // Convert velocity back to terrain-following speed
-  state.vx = vectorMagnitude(state.vx, state.vy) * Math.cos(terrain.slope);
+  state.vx = landingSpeed * penalty * Math.cos(terrain.slope);
   state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
   state.vy = 0;
   state.airTime = 0;

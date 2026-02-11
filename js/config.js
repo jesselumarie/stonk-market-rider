@@ -4,7 +4,7 @@ export const PHYSICS = {
   FRICTION: 0.98,
   JUMP_FORCE: 450,
   LANDING_ANGLE_TOLERANCE: 0.4,
-  LANDING_IMPACT_DEATH: 800,
+  LANDING_IMPACT_DEATH: 1400,
   AIRTIME_DEATH_SECONDS: 4,
 };
 
@@ -50,10 +50,6 @@ export const DIFFICULTY = {
   // Constant forward push (acceleration px/s²) that increases with progress
   SPEED_BOOST_START: 0,
   SPEED_BOOST_END: 180,
-
-  // Landing angle tolerance tightens as you progress (radians)
-  LANDING_TOLERANCE_START: 0.4,
-  LANDING_TOLERANCE_END: 0.22,
 };
 
 export const RIDER_STATES = {
