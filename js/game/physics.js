@@ -59,7 +59,7 @@ function updateOnTerrain(dt, input) {
   const slope = terrain.slope;
 
   // Acceleration from gravity along slope
-  const gravityAccel = PHYSICS.GRAVITY * Math.sin(slope);
+  const gravityAccel = -PHYSICS.GRAVITY * Math.sin(slope);
   const frictionDecel = state.vx > 0 ? -PHYSICS.GRAVITY * 0.05 : PHYSICS.GRAVITY * 0.05;
 
   state.vx += (gravityAccel + frictionDecel) * dt;
@@ -84,7 +84,7 @@ function updateOnTerrain(dt, input) {
   // Jump input
   if (input.jump) {
     state.riderState = RIDER_STATES.AIRBORNE;
-    state.vy = -PHYSICS.JUMP_FORCE;
+    state.vy = PHYSICS.JUMP_FORCE;
     // Preserve horizontal velocity
     const speed = state.vx;
     state.vx = speed * Math.cos(state.rotation);
@@ -94,7 +94,7 @@ function updateOnTerrain(dt, input) {
 
 function updateAirborne(dt) {
   // Gravity
-  state.vy += PHYSICS.GRAVITY * dt;
+  state.vy -= PHYSICS.GRAVITY * dt;
   state.vy = clamp(state.vy, -2000, 2000);
 
   // Update position
@@ -114,7 +114,7 @@ function updateAirborne(dt) {
 
   // Check for terrain collision
   const terrain = getTerrainAt(state.collisionData, state.x);
-  if (state.y >= terrain.y && state.vy > 0) {
+  if (state.y <= terrain.y && state.vy < 0) {
     // Landing!
     handleLanding(terrain);
   }
