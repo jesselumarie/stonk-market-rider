@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Stonk Market Rider</title>
+  <meta name="description" content="Ride the stock market like Line Rider! A Wall Street bro on a suitcase surfs real stock price charts.">
+  <meta property="og:title" content="Stonk Market Rider">
+  <meta property="og:description" content="Ride the stock market like Line Rider! A Wall Street bro on a suitcase surfs real stock price charts.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <div id="ui-overlay">
+    <!-- Menu / Stock Picker -->
+    <div id="menu-screen">
+      <h1>Stonk Market<br>Rider</h1>
+      <p class="subtitle">ride the market like your portfolio depends on it</p>
+      <div class="stock-picker">
+        <div class="search-container">
+          <input type="text" id="ticker-search" placeholder="Search a company or ticker..." autocomplete="off">
+          <div id="autocomplete-list"></div>
+        </div>
+        <div id="selected-ticker-display"></div>
+        <div class="timeframe-selector">
+          <button class="timeframe-btn" data-tf="1D">1D</button>
+          <button class="timeframe-btn" data-tf="1M">1M</button>
+          <button class="timeframe-btn" data-tf="6M">6M</button>
+          <button class="timeframe-btn active" data-tf="1Y">1Y</button>
+          <button class="timeframe-btn" data-tf="5Y">5Y</button>
+        </div>
+        <p class="error-message" id="error-message"></p>
+        <button id="ride-btn" disabled>RIDE</button>
+      </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <p class="loading-text">Drawing the line...</p>
+      <div class="loading-line">
+        <div class="loading-line-fill" id="loading-fill"></div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-left">
+        <div class="ticker-name" id="hud-ticker"></div>
+        <div id="hud-company"></div>
+      </div>
+      <div class="hud-right">
+        <div class="price" id="hud-price"></div>
+        <div id="hud-date"></div>
+      </div>
+    </div>
+    <div id="jump-hint">SPACE or TAP to jump</div>
+
+    <!-- Death Screen -->
+    <div id="death-screen">
+      <div class="death-title">YOU CAN'T TAKE IT<br>WITH YOU</div>
+      <div class="death-stats">
+        <div id="death-ticker"></div>
+        <div id="death-survived"></div>
+        <div id="death-drop"></div>
+        <div id="death-cause"></div>
+      </div>
+      <div class="death-buttons">
+        <button class="death-btn primary" id="ride-again-btn">Ride Again</button>
+        <button class="death-btn" id="new-ride-btn">New Ride</button>
+        <button class="death-btn" id="share-btn">Share</button>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pause-overlay">
+      <p class="pause-text">Paused</p>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
