@@ -114,10 +114,16 @@ function setupInputHandlers() {
       }
     }
     if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-      if (appState === STATES.RIDING) handleInput('lean_left_down');
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('lean_left_down');
+      }
     }
     if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-      if (appState === STATES.RIDING) handleInput('lean_right_down');
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('lean_right_down');
+      }
     }
   });
 
