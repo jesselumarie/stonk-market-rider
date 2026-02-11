@@ -132,9 +132,19 @@ function updateAirborne(dt, input) {
     return;
   }
 
-  // Check for terrain collision — magnet: touch the line → snap on
+  // Magnet landing: once past the initial jump arc, snap back to the
+  // line when close. Uses a generous snap distance so downslopes
+  // don't let the rider float above forever.
   const terrain = getTerrainAt(state.collisionData, state.x);
-  if (state.y <= terrain.y && state.vy < 0) {
+  const distAbove = state.y - terrain.y;
+  const pastApex = state.vy < 0;
+  const MAGNET_RANGE = 25;
+
+  if (state.y <= terrain.y) {
+    // Below terrain — always snap
+    handleLanding(terrain);
+  } else if (pastApex && distAbove < MAGNET_RANGE) {
+    // Falling and close to the line — magnet snap
     handleLanding(terrain);
   }
 }
