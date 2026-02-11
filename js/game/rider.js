@@ -21,6 +21,8 @@ let jumpPressed = false;
 let jumpConsumed = false;
 let leanLeft = false;
 let leanRight = false;
+let accelUp = false;
+let accelDown = false;
 
 export function initRider() {
   lastJumpTime = 0;
@@ -28,6 +30,8 @@ export function initRider() {
   jumpConsumed = false;
   leanLeft = false;
   leanRight = false;
+  accelUp = false;
+  accelDown = false;
 }
 
 export function handleInput(event) {
@@ -44,6 +48,14 @@ export function handleInput(event) {
     leanRight = true;
   } else if (event === 'lean_right_up') {
     leanRight = false;
+  } else if (event === 'accel_up_down') {
+    accelUp = true;
+  } else if (event === 'accel_up_up') {
+    accelUp = false;
+  } else if (event === 'accel_down_down') {
+    accelDown = true;
+  } else if (event === 'accel_down_up') {
+    accelDown = false;
   }
 }
 
@@ -61,6 +73,12 @@ export function getLeanInput() {
   if (leanLeft) lean += 1;   // rotate nose up (counterclockwise)
   if (leanRight) lean -= 1;  // rotate nose down (clockwise)
   return lean;
+}
+
+export function getAccelInput() {
+  if (accelUp) return 1;
+  if (accelDown) return -1;
+  return 0;
 }
 
 export { AIR_ROTATE_SPEED };

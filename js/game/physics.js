@@ -87,8 +87,12 @@ function updateOnTerrain(dt, input) {
   const gravityAccel = -PHYSICS.GRAVITY * Math.sin(slope);
   const frictionDecel = state.vx > 0 ? -PHYSICS.GRAVITY * 0.05 : PHYSICS.GRAVITY * 0.05;
 
+  // Player speed control (up/down arrows)
+  const ACCEL_FORCE = 400;
+  const playerAccel = (input.accel || 0) * ACCEL_FORCE;
+
   // Progressive forward push
-  state.vx += (gravityAccel + frictionDecel + diff.speedBoost) * dt;
+  state.vx += (gravityAccel + frictionDecel + diff.speedBoost + playerAccel) * dt;
   state.vx *= PHYSICS.FRICTION;
   state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
 
@@ -160,8 +164,13 @@ function handleLanding(terrain) {
     return;
   }
 
-  // Speed penalty for bad angle — compute before snapping rotation
+  // Head-first death: if rider is roughly upside-down, they landed on their head
   const angleMismatch = Math.abs(state.rotation - terrain.slope);
+  if (angleMismatch > Math.PI / 2) {
+    state.riderState = RIDER_STATES.DEAD;
+    state.deathCause = 'Landed on your head';
+    return;
+  }
   const landingSpeed = vectorMagnitude(state.vx, state.vy);
   const penalty = clamp(1 - angleMismatch * 0.8, 0.3, 1);
 
