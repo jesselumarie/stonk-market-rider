@@ -154,17 +154,44 @@ function createTerrainVisuals(splinePoints, controlPoints, priceData, sceneWidth
     dotObjects.add(dot);
   }
 
-  // Grid lines (graph paper effect)
-  const gridObject = createGrid(controlPoints, priceData, sceneWidth);
-
-  // Price and date labels
-  const labelObjects = new THREE.Group();
+  // Grid lines (graph paper effect) + price/date labels
+  const { gridObject, labelObjects } = createGrid(controlPoints, priceData, sceneWidth);
 
   return { lineObject, dotObjects, gridObject, labelObjects };
 }
 
+function makeTextSprite(text, color) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const fontSize = 48;
+  ctx.font = `${fontSize}px "Patrick Hand", cursive`;
+  const width = Math.ceil(ctx.measureText(text).width) + 8;
+  canvas.width = width;
+  canvas.height = fontSize + 12;
+  // Re-set font after resize
+  ctx.font = `${fontSize}px "Patrick Hand", cursive`;
+  ctx.fillStyle = color || '#8899aa';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 4, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(material);
+  // Scale sprite to world units (roughly 1 world unit per 2 canvas pixels)
+  sprite.scale.set(width / 2, (fontSize + 12) / 2, 1);
+  return sprite;
+}
+
+function formatPrice(p) {
+  if (p >= 1000) return `$${(p / 1000).toFixed(1)}k`;
+  if (p >= 1) return `$${p.toFixed(2)}`;
+  return `$${p.toPrecision(3)}`;
+}
+
 function createGrid(controlPoints, priceData, sceneWidth) {
   const grid = new THREE.Group();
+  const labels = new THREE.Group();
   const gridMaterial = new THREE.LineBasicMaterial({
     color: 0xc8d8e8,
     transparent: true,
@@ -176,7 +203,7 @@ function createGrid(controlPoints, priceData, sceneWidth) {
   const maxPrice = Math.max(...prices);
   const priceRange = maxPrice - minPrice || 1;
 
-  // Horizontal grid lines (price levels)
+  // Horizontal grid lines (price levels) with price labels
   const numHLines = 6;
   for (let i = 0; i <= numHLines; i++) {
     const y = (i / numHLines) * RENDERING.TERRAIN_HEIGHT;
@@ -184,9 +211,15 @@ function createGrid(controlPoints, priceData, sceneWidth) {
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     grid.add(new THREE.Line(geom, gridMaterial));
+
+    // Price label on left edge
+    const price = minPrice + (i / numHLines) * priceRange;
+    const label = makeTextSprite(formatPrice(price), '#8899aa');
+    label.position.set(-label.scale.x / 2 - 5, y, 0.2);
+    labels.add(label);
   }
 
-  // Vertical grid lines (time intervals)
+  // Vertical grid lines (time intervals) with date labels
   const numVLines = Math.min(12, priceData.length);
   for (let i = 0; i <= numVLines; i++) {
     const x = (i / numVLines) * sceneWidth;
@@ -194,9 +227,18 @@ function createGrid(controlPoints, priceData, sceneWidth) {
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     grid.add(new THREE.Line(geom, gridMaterial));
+
+    // Date label at bottom
+    const dataIdx = Math.round((i / numVLines) * (priceData.length - 1));
+    const dateStr = priceData[dataIdx]?.date || '';
+    if (dateStr) {
+      const dateLabel = makeTextSprite(dateStr, '#8899aa');
+      dateLabel.position.set(x, -30, 0.2);
+      labels.add(dateLabel);
+    }
   }
 
-  return grid;
+  return { gridObject: grid, labelObjects: labels };
 }
 
 /**

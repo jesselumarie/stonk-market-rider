@@ -3,9 +3,8 @@ export const PHYSICS = {
   MAX_VELOCITY: 1200,
   FRICTION: 0.98,
   JUMP_FORCE: 450,
-  DETACH_SLOPE_THRESHOLD: -1.2,
   LANDING_ANGLE_TOLERANCE: 0.4,
-  LANDING_IMPACT_DEATH: 800,
+  LANDING_IMPACT_DEATH: 1400,
   AIRTIME_DEATH_SECONDS: 4,
 };
 
@@ -41,6 +40,16 @@ export const STATES = {
   LOADING: 'LOADING',
   RIDING: 'RIDING',
   DEAD: 'DEAD',
+};
+
+export const DIFFICULTY = {
+  // Minimum forward speed ramps up as you progress through the terrain
+  BASE_MIN_SPEED: 30,
+  MAX_MIN_SPEED: 200,
+
+  // Constant forward push (acceleration px/s²) that increases with progress
+  SPEED_BOOST_START: 0,
+  SPEED_BOOST_END: 180,
 };
 
 export const RIDER_STATES = {

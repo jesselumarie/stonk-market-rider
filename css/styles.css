@@ -297,6 +297,23 @@ html, body {
   font-size: 1.5rem;
 }
 
+.hud-center {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--ink-light);
+}
+
+.hud-center .speed-level {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--ink-color);
+  transition: color 0.3s;
+}
+
+.hud-center .speed-level.fast {
+  color: var(--red-accent);
+}
+
 .hud-right {
   text-align: right;
   font-size: 1.2rem;

@@ -5,13 +5,13 @@ import { createRiderSprites, updateRiderSprite, getRiderSprite } from './renderi
 import { createPaperOverlay, createMarginDoodles } from './rendering/effects.js';
 import { initDeathScreen, showDeathScreen, hideDeathScreen } from './rendering/deathScreen.js';
 import { buildTerrain, getTerrainAt, getPriceAtX, computeStats } from './game/terrain.js';
-import { initPhysics, updatePhysics, getPhysicsState } from './game/physics.js';
-import { initRider, handleInput, getJumpInput, getSpriteState, getRiderRotation } from './game/rider.js';
+import { initPhysics, updatePhysics, getPhysicsState, getDifficultyState } from './game/physics.js';
+import { initRider, handleInput, getJumpInput, getLeanInput, getAccelInput, AIR_ROTATE_SPEED, getSpriteState, getRiderRotation } from './game/rider.js';
 import { initCamera, updateCamera } from './game/camera.js';
 import {
   initAudio, resumeAudio, startPencilLoop, stopPencilLoop,
   updatePencilVolume, startWindLoop, stopWindLoop, updateWindVolume,
-  playJump, playLandClean, playDeathSting, stopAllSounds,
+  playJump, playLandClean, playDeathSting, playWilhelmScream, stopAllSounds,
 } from './audio/soundManager.js';
 import { fetchStockData, generateSampleData } from './data/stockApi.js';
 import { initStockPicker, showError, clearError, setTickerFromURL } from './ui/stockPicker.js';
@@ -111,6 +111,32 @@ function setupInputHandlers() {
       if (appState === STATES.RIDING) {
         initAudioOnInteraction();
         handleInput('jump_down');
+      } else if (appState === STATES.DEAD) {
+        startRide(currentTicker, currentCompany, currentTimeframe);
+      }
+    }
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('lean_left_down');
+      }
+    }
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('lean_right_down');
+      }
+    }
+    if (e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('accel_up_down');
+      }
+    }
+    if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+      if (appState === STATES.RIDING) {
+        e.preventDefault();
+        handleInput('accel_down_down');
       }
     }
   });
@@ -118,6 +144,18 @@ function setupInputHandlers() {
   document.addEventListener('keyup', (e) => {
     if (e.code === 'Space' || e.key === ' ') {
       handleInput('jump_up');
+    }
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      handleInput('lean_left_up');
+    }
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      handleInput('lean_right_up');
+    }
+    if (e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      handleInput('accel_up_up');
+    }
+    if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+      handleInput('accel_down_up');
     }
   });
 
@@ -154,10 +192,10 @@ function setState(newState) {
 
   menuScreen.style.display = newState === STATES.MENU ? 'flex' : 'none';
   loadingScreen.classList.toggle('visible', newState === STATES.LOADING);
+  hideDeathScreen();
 
   if (newState === STATES.MENU) {
     hideHUD();
-    hideDeathScreen();
   }
 }
 
@@ -286,8 +324,12 @@ function gameLoop(timestamp) {
       playJump();
     }
 
+    // Get lean input for air control
+    const lean = getLeanInput();
+    const accel = getAccelInput();
+
     // Update physics
-    const phys = updatePhysics(dt, { jump });
+    const phys = updatePhysics(dt, { jump, lean, accel, airRotateSpeed: AIR_ROTATE_SPEED });
 
     // Detect state transitions for audio
     if (previousRiderState !== phys.riderState) {
@@ -314,7 +356,7 @@ function gameLoop(timestamp) {
 
     // Update HUD
     const priceInfo = getPriceAtX(currentTerrain.controlPoints, phys.x);
-    updateHUD(priceInfo);
+    updateHUD(priceInfo, getDifficultyState());
 
     // Check for death
     if (phys.riderState === RIDER_STATES.DEAD) {
@@ -345,7 +387,11 @@ function onDeath(physicsState) {
   hideHUD();
   stopPencilLoop();
   stopWindLoop();
-  playDeathSting();
+  if (physicsState.deathCause === 'Reached the end of the line') {
+    playWilhelmScream();
+  } else {
+    playDeathSting();
+  }
 
   // Compute stats
   const priceInfo = getPriceAtX(currentTerrain.controlPoints, physicsState.x);

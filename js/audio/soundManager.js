@@ -264,6 +264,90 @@ export function playDeathSting() {
   });
 }
 
+export function playWilhelmScream() {
+  if (!initialized) return;
+
+  const t = audioCtx.currentTime;
+  const duration = 1.2;
+
+  // Fundamental voice: descending scream ~800Hz → 400Hz
+  const fund = audioCtx.createOscillator();
+  const fundGain = audioCtx.createGain();
+  fund.type = 'sawtooth';
+  fund.frequency.setValueAtTime(800, t);
+  fund.frequency.exponentialRampToValueAtTime(400, t + duration);
+  fundGain.gain.setValueAtTime(0.001, t);
+  fundGain.gain.linearRampToValueAtTime(0.25, t + 0.05);
+  fundGain.gain.setValueAtTime(0.25, t + 0.3);
+  fundGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  fund.connect(fundGain);
+  fundGain.connect(masterGain);
+  fund.start(t);
+  fund.stop(t + duration);
+
+  // Vibrato LFO for human-like wobble
+  const vibrato = audioCtx.createOscillator();
+  const vibratoGain = audioCtx.createGain();
+  vibrato.frequency.value = 6;
+  vibratoGain.gain.value = 30;
+  vibrato.connect(vibratoGain);
+  vibratoGain.connect(fund.frequency);
+  vibrato.start(t);
+  vibrato.stop(t + duration);
+
+  // Second formant: higher harmonic for scream timbre
+  const form2 = audioCtx.createOscillator();
+  const form2Gain = audioCtx.createGain();
+  form2.type = 'sawtooth';
+  form2.frequency.setValueAtTime(1600, t);
+  form2.frequency.exponentialRampToValueAtTime(800, t + duration);
+  form2Gain.gain.setValueAtTime(0.001, t);
+  form2Gain.gain.linearRampToValueAtTime(0.12, t + 0.05);
+  form2Gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  form2.connect(form2Gain);
+  form2Gain.connect(masterGain);
+  form2.start(t);
+  form2.stop(t + duration);
+
+  // Third formant: nasal screech
+  const form3 = audioCtx.createOscillator();
+  const form3Gain = audioCtx.createGain();
+  form3.type = 'square';
+  form3.frequency.setValueAtTime(2400, t);
+  form3.frequency.exponentialRampToValueAtTime(1200, t + duration);
+  form3Gain.gain.setValueAtTime(0.001, t);
+  form3Gain.gain.linearRampToValueAtTime(0.06, t + 0.05);
+  form3Gain.gain.exponentialRampToValueAtTime(0.001, t + duration * 0.7);
+  form3.connect(form3Gain);
+  form3Gain.connect(masterGain);
+  form3.start(t);
+  form3.stop(t + duration);
+
+  // Breathy noise layer
+  const noiseLen = audioCtx.sampleRate * duration;
+  const noiseBuf = audioCtx.createBuffer(1, noiseLen, audioCtx.sampleRate);
+  const noiseData = noiseBuf.getChannelData(0);
+  for (let i = 0; i < noiseLen; i++) {
+    noiseData[i] = (Math.random() * 2 - 1) * 0.5;
+  }
+  const noiseSrc = audioCtx.createBufferSource();
+  noiseSrc.buffer = noiseBuf;
+  const noiseFilter = audioCtx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.setValueAtTime(2000, t);
+  noiseFilter.frequency.exponentialRampToValueAtTime(800, t + duration);
+  noiseFilter.Q.value = 2;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.001, t);
+  noiseGain.gain.linearRampToValueAtTime(0.1, t + 0.05);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  noiseSrc.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(masterGain);
+  noiseSrc.start(t);
+  noiseSrc.stop(t + duration);
+}
+
 export function stopAllSounds() {
   stopPencilLoop();
   stopWindLoop();

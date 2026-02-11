@@ -20,7 +20,7 @@
       <p class="subtitle">ride the market like your portfolio depends on it</p>
       <div class="stock-picker">
         <div class="search-container">
-          <input type="text" id="ticker-search" placeholder="Search a company or ticker..." autocomplete="off">
+          <input type="text" id="ticker-search" placeholder="Type any ticker (AAPL, GME, BTC-USD...)" autocomplete="off">
           <div id="autocomplete-list"></div>
         </div>
         <div id="selected-ticker-display"></div>
@@ -50,12 +50,15 @@
         <div class="ticker-name" id="hud-ticker"></div>
         <div id="hud-company"></div>
       </div>
+      <div class="hud-center">
+        <div class="speed-level" id="hud-speed-level"></div>
+      </div>
       <div class="hud-right">
         <div class="price" id="hud-price"></div>
         <div id="hud-date"></div>
       </div>
     </div>
-    <div id="jump-hint">SPACE or TAP to jump</div>
+    <div id="jump-hint">SPACE jump &middot; LEFT/RIGHT level &middot; UP/DOWN speed</div>
 
     <!-- Death Screen -->
     <div id="death-screen">

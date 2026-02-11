@@ -36,8 +36,12 @@ export function updateRiderSprite(spriteState, x, y, rotation) {
     riderSprite.material.needsUpdate = true;
   }
 
-  riderSprite.position.set(x, y + RENDERING.RIDER_SCALE * 0.3, 1);
-  // Apply rotation via the material rotation (sprites don't rotate in 3D the usual way)
+  // Offset the sprite center perpendicular to the slope so the
+  // briefcase (bottom of sprite) sits exactly on the terrain line.
+  const offset = RENDERING.RIDER_SCALE * 0.3;
+  const px = x - offset * Math.sin(rotation);
+  const py = y + offset * Math.cos(rotation);
+  riderSprite.position.set(px, py, 1);
   riderSprite.material.rotation = -rotation;
 }
 
