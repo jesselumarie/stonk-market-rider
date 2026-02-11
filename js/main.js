@@ -111,6 +111,8 @@ function setupInputHandlers() {
       if (appState === STATES.RIDING) {
         initAudioOnInteraction();
         handleInput('jump_down');
+      } else if (appState === STATES.DEAD) {
+        startRide(currentTicker, currentCompany, currentTimeframe);
       }
     }
     if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {

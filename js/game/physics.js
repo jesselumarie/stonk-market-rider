@@ -115,21 +115,17 @@ function updateAirborne(dt, input) {
   state.vy -= PHYSICS.GRAVITY * dt;
   state.vy = clamp(state.vy, -2000, 2000);
 
-  // Air control: rotate velocity vector with left/right input
-  if (input.lean && input.lean !== 0) {
-    const angle = vectorAngle(state.vx, state.vy);
-    const speed = vectorMagnitude(state.vx, state.vy);
-    const newAngle = angle + input.lean * input.airRotateSpeed * dt;
-    state.vx = speed * Math.cos(newAngle);
-    state.vy = speed * Math.sin(newAngle);
-  }
-
-  // Update position
+  // Update position (velocity is unaffected by lean)
   state.x += state.vx * dt;
   state.y += state.vy * dt;
 
-  // Update rotation to follow velocity vector
-  state.rotation = vectorAngle(state.vx, state.vy);
+  // Air control: lean only rotates the rider for leveling, not the velocity
+  if (input.lean && input.lean !== 0) {
+    state.rotation += input.lean * input.airRotateSpeed * dt;
+  } else {
+    // Drift rotation toward velocity angle when not leaning
+    state.rotation = vectorAngle(state.vx, state.vy);
+  }
 
   // Track air time
   state.airTime += dt;
