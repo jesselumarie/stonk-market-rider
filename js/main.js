@@ -172,10 +172,10 @@ function setState(newState) {
 
   menuScreen.style.display = newState === STATES.MENU ? 'flex' : 'none';
   loadingScreen.classList.toggle('visible', newState === STATES.LOADING);
+  hideDeathScreen();
 
   if (newState === STATES.MENU) {
     hideHUD();
-    hideDeathScreen();
   }
 }
 
