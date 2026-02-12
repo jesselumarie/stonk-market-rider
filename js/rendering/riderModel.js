@@ -42,7 +42,7 @@ export function updateRiderSprite(spriteState, x, y, rotation) {
   const px = x - offset * Math.sin(rotation);
   const py = y + offset * Math.cos(rotation);
   riderSprite.position.set(px, py, 1);
-  riderSprite.material.rotation = -rotation;
+  riderSprite.material.rotation = rotation;
 }
 
 export function getRiderSprite() {
