@@ -6,6 +6,12 @@ export const PHYSICS = {
   LANDING_ANGLE_TOLERANCE: 0.4,
   LANDING_IMPACT_DEATH: 1400,
   AIRTIME_DEATH_SECONDS: 4,
+
+  // Magnetic board physics
+  MAGNET_ALIGN_RATE: 8,       // How fast board aligns to terrain slope (per second)
+  BOARD_ROTATE_SPEED: 3.0,    // Player rotation speed (rad/s)
+  LAUNCH_LOOKAHEAD: 0.05,     // Seconds to project ahead for hill launch detection
+  LAUNCH_THRESHOLD: 2,        // Pixels above terrain to trigger natural launch
 };
 
 export const CAMERA = {
