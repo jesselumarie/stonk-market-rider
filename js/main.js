@@ -115,13 +115,13 @@ function setupInputHandlers() {
         startRide(currentTicker, currentCompany, currentTimeframe);
       }
     }
-    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.key === 'h' || e.key === 'H') {
       if (appState === STATES.RIDING) {
         e.preventDefault();
         handleInput('lean_left_down');
       }
     }
-    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === 'l' || e.key === 'L') {
       if (appState === STATES.RIDING) {
         e.preventDefault();
         handleInput('lean_right_down');
@@ -145,10 +145,10 @@ function setupInputHandlers() {
     if (e.code === 'Space' || e.key === ' ') {
       handleInput('jump_up');
     }
-    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.key === 'h' || e.key === 'H') {
       handleInput('lean_left_up');
     }
-    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.key === 'l' || e.key === 'L') {
       handleInput('lean_right_up');
     }
     if (e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
