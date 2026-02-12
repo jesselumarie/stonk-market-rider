@@ -14,6 +14,10 @@ let windSource = null;
 let pencilGain = null;
 let windGain = null;
 
+// Cached Wilhelm Scream audio buffer (fetched once from Wikimedia Commons)
+let wilhelmBuffer = null;
+let wilhelmFetchAttempted = false;
+
 export function initAudio() {
   // Audio context must be created on user gesture
   if (audioCtx) return;
@@ -33,6 +37,23 @@ export function resumeAudio() {
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
+  // Pre-fetch the real Wilhelm Scream so it's ready when needed
+  fetchWilhelmScream();
+}
+
+function fetchWilhelmScream() {
+  if (wilhelmFetchAttempted || !audioCtx) return;
+  wilhelmFetchAttempted = true;
+
+  const url = 'https://upload.wikimedia.org/wikipedia/commons/d/d9/Wilhelm_Scream.ogg';
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error(res.status);
+      return res.arrayBuffer();
+    })
+    .then(buf => audioCtx.decodeAudioData(buf))
+    .then(decoded => { wilhelmBuffer = decoded; })
+    .catch(() => { /* Fallback to procedural version */ });
 }
 
 export function toggleMute() {
@@ -267,10 +288,25 @@ export function playDeathSting() {
 export function playWilhelmScream() {
   if (!initialized) return;
 
+  if (wilhelmBuffer) {
+    // Play the real Wilhelm Scream
+    const source = audioCtx.createBufferSource();
+    source.buffer = wilhelmBuffer;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.7;
+    source.connect(gain);
+    gain.connect(masterGain);
+    source.start();
+  } else {
+    // Fallback: procedural scream if fetch failed
+    playProceduralScream();
+  }
+}
+
+function playProceduralScream() {
   const t = audioCtx.currentTime;
   const duration = 1.2;
 
-  // Fundamental voice: descending scream ~800Hz → 400Hz
   const fund = audioCtx.createOscillator();
   const fundGain = audioCtx.createGain();
   fund.type = 'sawtooth';
@@ -285,7 +321,6 @@ export function playWilhelmScream() {
   fund.start(t);
   fund.stop(t + duration);
 
-  // Vibrato LFO for human-like wobble
   const vibrato = audioCtx.createOscillator();
   const vibratoGain = audioCtx.createGain();
   vibrato.frequency.value = 6;
@@ -295,7 +330,6 @@ export function playWilhelmScream() {
   vibrato.start(t);
   vibrato.stop(t + duration);
 
-  // Second formant: higher harmonic for scream timbre
   const form2 = audioCtx.createOscillator();
   const form2Gain = audioCtx.createGain();
   form2.type = 'sawtooth';
@@ -309,21 +343,6 @@ export function playWilhelmScream() {
   form2.start(t);
   form2.stop(t + duration);
 
-  // Third formant: nasal screech
-  const form3 = audioCtx.createOscillator();
-  const form3Gain = audioCtx.createGain();
-  form3.type = 'square';
-  form3.frequency.setValueAtTime(2400, t);
-  form3.frequency.exponentialRampToValueAtTime(1200, t + duration);
-  form3Gain.gain.setValueAtTime(0.001, t);
-  form3Gain.gain.linearRampToValueAtTime(0.06, t + 0.05);
-  form3Gain.gain.exponentialRampToValueAtTime(0.001, t + duration * 0.7);
-  form3.connect(form3Gain);
-  form3Gain.connect(masterGain);
-  form3.start(t);
-  form3.stop(t + duration);
-
-  // Breathy noise layer
   const noiseLen = audioCtx.sampleRate * duration;
   const noiseBuf = audioCtx.createBuffer(1, noiseLen, audioCtx.sampleRate);
   const noiseData = noiseBuf.getChannelData(0);
