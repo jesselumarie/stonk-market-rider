@@ -344,7 +344,25 @@ html, body {
   opacity: 0;
 }
 
-/* Death Screen */
+/* Death Screen — Resident Evil bloody fade-in */
+@keyframes blood-drip {
+  0% { transform: scaleY(0); opacity: 0; }
+  40% { transform: scaleY(1); opacity: 0.7; }
+  100% { transform: scaleY(1); opacity: 0; }
+}
+
+@keyframes blood-vignette-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes title-glitch {
+  0%, 90%, 100% { transform: scale(1) skew(0deg); }
+  92% { transform: scale(1.02) skew(-2deg); }
+  94% { transform: scale(0.98) skew(1deg); }
+  96% { transform: scale(1.01) skew(-1deg); }
+}
+
 #death-screen {
   position: absolute;
   top: 0;
@@ -356,33 +374,90 @@ html, body {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0);
-  transition: background 1.5s;
   z-index: 20;
+  overflow: hidden;
 }
 
 #death-screen.visible {
   display: flex;
-  background: rgba(0, 0, 0, 0.85);
+  animation: death-fade-in 2s ease-out forwards;
+}
+
+@keyframes death-fade-in {
+  0% { background: rgba(80, 0, 0, 0); }
+  30% { background: rgba(80, 0, 0, 0.6); }
+  100% { background: rgba(10, 0, 0, 0.92); }
+}
+
+/* Blood vignette overlay */
+#death-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(120, 10, 10, 0.5) 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#death-screen.visible::before {
+  animation: blood-vignette-pulse 4s ease-in-out 1s infinite;
+}
+
+/* Blood drip streaks */
+#death-screen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(180deg, rgba(139, 0, 0, 0.8) 0%, transparent 60%) no-repeat 10% 0 / 3px 40%,
+    linear-gradient(180deg, rgba(139, 0, 0, 0.6) 0%, transparent 70%) no-repeat 25% 0 / 2px 55%,
+    linear-gradient(180deg, rgba(139, 0, 0, 0.9) 0%, transparent 50%) no-repeat 42% 0 / 4px 35%,
+    linear-gradient(180deg, rgba(139, 0, 0, 0.5) 0%, transparent 65%) no-repeat 58% 0 / 2px 50%,
+    linear-gradient(180deg, rgba(139, 0, 0, 0.7) 0%, transparent 55%) no-repeat 73% 0 / 3px 45%,
+    linear-gradient(180deg, rgba(139, 0, 0, 0.8) 0%, transparent 60%) no-repeat 88% 0 / 2px 38%;
+  transform-origin: top;
+  transform: scaleY(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#death-screen.visible::after {
+  animation: blood-drip 3s ease-out 0.3s forwards;
 }
 
 #death-screen .death-title {
   font-family: var(--font-death);
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 900;
-  color: var(--red-accent);
+  color: #cc1100;
   text-transform: uppercase;
-  letter-spacing: 4px;
+  letter-spacing: 6px;
   text-align: center;
   opacity: 0;
-  transform: scale(0.5);
-  transition: opacity 1s 0.5s, transform 1s 0.5s;
-  text-shadow: 0 0 40px rgba(192, 57, 43, 0.5);
+  transform: scale(0.3);
   padding: 0 20px;
+  text-shadow:
+    0 0 20px rgba(200, 0, 0, 0.8),
+    0 0 60px rgba(150, 0, 0, 0.5),
+    0 0 120px rgba(100, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+  position: relative;
+  z-index: 1;
 }
 
 #death-screen.visible .death-title {
-  opacity: 1;
-  transform: scale(1);
+  animation: death-title-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
+             title-glitch 6s ease-in-out 3s infinite;
+}
+
+@keyframes death-title-in {
+  0% { opacity: 0; transform: scale(0.3); filter: blur(8px); }
+  60% { opacity: 1; transform: scale(1.1); filter: blur(0); }
+  80% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
 }
 
 .death-stats {
@@ -390,10 +465,14 @@ html, body {
   text-align: center;
   font-family: var(--font-hand);
   font-size: 1.1rem;
-  color: #ccc;
+  color: #aa8888;
   opacity: 0;
-  transition: opacity 1s 2s;
+  transition: opacity 1.2s ease-out;
+  transition-delay: 2.2s;
   line-height: 1.8;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 #death-screen.visible .death-stats {
@@ -405,7 +484,10 @@ html, body {
   display: flex;
   gap: 16px;
   opacity: 0;
-  transition: opacity 1s 2.5s;
+  transition: opacity 1s ease-out;
+  transition-delay: 3s;
+  position: relative;
+  z-index: 1;
 }
 
 #death-screen.visible .death-buttons {
@@ -417,27 +499,30 @@ html, body {
   font-family: var(--font-sketch);
   font-size: 1.4rem;
   font-weight: 700;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  background: transparent;
-  color: #ccc;
+  border: 2px solid #664444;
+  border-radius: 4px;
+  background: rgba(40, 0, 0, 0.6);
+  color: #aa8888;
   cursor: pointer;
   transition: all 0.2s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .death-btn:hover {
-  background: #ccc;
-  color: #111;
+  background: rgba(100, 10, 10, 0.7);
+  color: #ddc;
+  border-color: #993333;
 }
 
 .death-btn.primary {
-  border-color: var(--red-accent);
-  color: var(--red-accent);
+  border-color: #992211;
+  color: #cc3322;
 }
 
 .death-btn.primary:hover {
-  background: var(--red-accent);
+  background: rgba(150, 20, 10, 0.8);
   color: white;
+  box-shadow: 0 0 20px rgba(200, 0, 0, 0.4);
 }
 
 /* Pause overlay */
@@ -510,8 +595,8 @@ html, body {
   }
 
   #death-screen .death-title {
-    font-size: 2rem;
-    letter-spacing: 2px;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
   }
 
   .death-stats {

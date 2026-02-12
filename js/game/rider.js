@@ -70,8 +70,8 @@ export function getJumpInput(now) {
 
 export function getLeanInput() {
   let lean = 0;
-  if (leanLeft) lean += 1;   // rotate nose up (counterclockwise)
-  if (leanRight) lean -= 1;  // rotate nose down (clockwise)
+  if (leanLeft) lean -= 1;   // rotate nose down (clockwise)
+  if (leanRight) lean += 1;  // rotate nose up (counterclockwise)
   return lean;
 }
 
