@@ -1,4 +1,5 @@
 import { loadTickers, debouncedSearch } from '../data/tickerSearch.js';
+import { setGooseMode } from '../gooseMode.js';
 
 let selectedTicker = null;
 let selectedTimeframe = '1Y';
@@ -15,6 +16,13 @@ export async function initStockPicker(onRide) {
   const rideBtn = document.getElementById('ride-btn');
   const display = document.getElementById('selected-ticker-display');
   const errorMsg = document.getElementById('error-message');
+  const gooseToggle = document.getElementById('goose-mode-toggle');
+  const gooseCheckbox = document.getElementById('goose-mode-checkbox');
+
+  // Sync goose mode checkbox state
+  gooseCheckbox.addEventListener('change', () => {
+    setGooseMode(gooseCheckbox.checked);
+  });
 
   // Restore last ticker from localStorage
   const lastTicker = localStorage.getItem('lastTicker');
@@ -23,6 +31,7 @@ export async function initStockPicker(onRide) {
     searchInput.value = lastTicker;
     display.textContent = lastTicker;
     rideBtn.disabled = false;
+    updateGooseToggleVisibility(lastTicker, gooseToggle, gooseCheckbox);
   }
 
   // Auto-focus search input so users can start typing immediately
@@ -36,6 +45,7 @@ export async function initStockPicker(onRide) {
       selectedTicker = null;
       rideBtn.disabled = true;
       display.textContent = '';
+      updateGooseToggleVisibility('', gooseToggle, gooseCheckbox);
       return;
     }
 
@@ -43,6 +53,7 @@ export async function initStockPicker(onRide) {
     selectedTicker = { symbol: query.toUpperCase(), name: '' };
     display.textContent = query.toUpperCase();
     rideBtn.disabled = false;
+    updateGooseToggleVisibility(query.toUpperCase(), gooseToggle, gooseCheckbox);
 
     debouncedSearch(query, (results) => {
       currentResults = results;
@@ -158,6 +169,20 @@ function selectTicker(ticker, searchInput, display, rideBtn) {
   display.textContent = ticker.name ? `${ticker.symbol} - ${ticker.name}` : ticker.symbol;
   rideBtn.disabled = false;
   localStorage.setItem('lastTicker', ticker.symbol);
+  updateGooseToggleVisibility(
+    ticker.symbol,
+    document.getElementById('goose-mode-toggle'),
+    document.getElementById('goose-mode-checkbox')
+  );
+}
+
+function updateGooseToggleVisibility(symbol, toggleEl, checkboxEl) {
+  const isFig = symbol.toUpperCase() === 'FIG';
+  toggleEl.style.display = isFig ? 'block' : 'none';
+  if (!isFig) {
+    checkboxEl.checked = false;
+    setGooseMode(false);
+  }
 }
 
 export function showError(message) {
@@ -195,4 +220,11 @@ export function setTickerFromURL(symbol, timeframe) {
   tfButtons.forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tf === selectedTimeframe);
   });
+
+  // Update goose toggle visibility
+  updateGooseToggleVisibility(
+    symbol,
+    document.getElementById('goose-mode-toggle'),
+    document.getElementById('goose-mode-checkbox')
+  );
 }

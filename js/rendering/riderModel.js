@@ -1,19 +1,23 @@
 import * as THREE from 'three';
 import { RENDERING } from '../config.js';
+import { isGooseMode } from '../gooseMode.js';
+import { drawGooseIdle, drawGooseCrouch, drawGooseJump, drawGooseAir, drawGooseDead } from './gooseSprites.js';
 
 let riderSprite = null;
 let spriteTextures = {};
 
 /**
  * Generate all rider sprites programmatically using Canvas 2D.
+ * When goose mode is active, uses goose drawing functions instead.
  */
 export function createRiderSprites() {
+  const goose = isGooseMode();
   spriteTextures = {
-    idle: generateSpriteTexture(drawRiderIdle),
-    crouch: generateSpriteTexture(drawRiderCrouch),
-    jump: generateSpriteTexture(drawRiderJump),
-    air: generateSpriteTexture(drawRiderAir),
-    dead: generateSpriteTexture(drawRiderDead),
+    idle: generateSpriteTexture(goose ? drawGooseIdle : drawRiderIdle),
+    crouch: generateSpriteTexture(goose ? drawGooseCrouch : drawRiderCrouch),
+    jump: generateSpriteTexture(goose ? drawGooseJump : drawRiderJump),
+    air: generateSpriteTexture(goose ? drawGooseAir : drawRiderAir),
+    dead: generateSpriteTexture(goose ? drawGooseDead : drawRiderDead),
   };
 
   const material = new THREE.SpriteMaterial({
