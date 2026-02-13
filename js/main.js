@@ -205,6 +205,7 @@ function transitionToMenu() {
 }
 
 async function startRide(ticker, companyName, timeframe) {
+  initAudioOnInteraction();
   currentTicker = ticker;
   currentCompany = companyName;
   currentTimeframe = timeframe;
