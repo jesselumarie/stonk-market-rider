@@ -1,5 +1,6 @@
 let hudEl, tickerEl, companyEl, priceEl, dateEl, jumpHintEl, speedLevelEl;
 let hintTimeout = null;
+let startPrice = null;
 
 const SPEED_TIERS = [
   { threshold: 0,    label: 'Intern' },
@@ -25,6 +26,7 @@ export function showHUD(ticker, companyName) {
   tickerEl.textContent = ticker;
   companyEl.textContent = companyName || '';
   hudEl.classList.add('visible');
+  startPrice = null;
 
   // Show jump hint, fade after 5 seconds
   if (jumpHintEl) {
@@ -44,11 +46,14 @@ export function hideHUD() {
 export function updateHUD(priceInfo, difficulty) {
   if (!priceEl || !priceInfo) return;
 
+  if (startPrice === null) startPrice = priceInfo.price;
+
   const priceText = `$${priceInfo.price.toFixed(2)}`;
   priceEl.textContent = priceText;
 
   // Color based on whether price is above/below starting price
-  priceEl.className = 'price';
+  const direction = priceInfo.price >= startPrice ? 'up' : 'down';
+  priceEl.className = `price ${direction}`;
 
   if (dateEl) {
     dateEl.textContent = priceInfo.date || '';

@@ -16,6 +16,18 @@ export async function initStockPicker(onRide) {
   const display = document.getElementById('selected-ticker-display');
   const errorMsg = document.getElementById('error-message');
 
+  // Restore last ticker from localStorage
+  const lastTicker = localStorage.getItem('lastTicker');
+  if (lastTicker) {
+    selectedTicker = { symbol: lastTicker, name: '' };
+    searchInput.value = lastTicker;
+    display.textContent = lastTicker;
+    rideBtn.disabled = false;
+  }
+
+  // Auto-focus search input so users can start typing immediately
+  searchInput.focus();
+
   // Search input
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.trim();
@@ -54,13 +66,17 @@ export async function initStockPicker(onRide) {
       if (selectedIndex >= 0 && selectedIndex < currentResults.length) {
         selectTicker(currentResults[selectedIndex], searchInput, display, rideBtn);
         hideAutocomplete();
-      } else if (searchInput.value.trim().length > 0) {
+      } else if (autocompleteList.classList.contains('visible') && searchInput.value.trim().length > 0) {
         // Use typed text as ticker directly
         selectTicker(
           { symbol: searchInput.value.trim().toUpperCase(), name: '' },
           searchInput, display, rideBtn
         );
         hideAutocomplete();
+      } else if (selectedTicker && onRideCallback) {
+        // No autocomplete showing, ticker selected — start the ride
+        errorMsg.textContent = '';
+        onRideCallback(selectedTicker.symbol, selectedTicker.name, selectedTimeframe);
       }
     } else if (e.key === 'Escape') {
       hideAutocomplete();
@@ -88,6 +104,7 @@ export async function initStockPicker(onRide) {
   rideBtn.addEventListener('click', () => {
     if (selectedTicker && onRideCallback) {
       errorMsg.textContent = '';
+      localStorage.setItem('lastTicker', selectedTicker.symbol);
       onRideCallback(selectedTicker.symbol, selectedTicker.name, selectedTimeframe);
     }
   });
@@ -140,6 +157,7 @@ function selectTicker(ticker, searchInput, display, rideBtn) {
   searchInput.value = ticker.symbol;
   display.textContent = ticker.name ? `${ticker.symbol} - ${ticker.name}` : ticker.symbol;
   rideBtn.disabled = false;
+  localStorage.setItem('lastTicker', ticker.symbol);
 }
 
 export function showError(message) {

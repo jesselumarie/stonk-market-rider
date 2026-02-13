@@ -1,5 +1,5 @@
 import { PHYSICS, DIFFICULTY, RIDER_STATES } from '../config.js';
-import { clamp, vectorAngle, vectorMagnitude } from '../utils/math.js';
+import { clamp, angleBetween, vectorMagnitude } from '../utils/math.js';
 import { getTerrainAt } from './terrain.js';
 
 let state = {
@@ -83,11 +83,20 @@ function updateOnTerrain(dt, input) {
   const slope = terrain.slope;
   const diff = getDifficulty();
 
-  // Acceleration from gravity along slope
+  // --- Board rotation ---
+  // Player left/right rotates the board continuously while held
+  if (input.lean && input.lean !== 0) {
+    state.rotation += input.lean * PHYSICS.BOARD_ROTATE_SPEED * dt;
+  }
+  // Magnetic alignment: pull board rotation toward terrain slope
+  const angleDiff = angleBetween(state.rotation, slope);
+  state.rotation += angleDiff * PHYSICS.MAGNET_ALIGN_RATE * dt;
+
+  // --- Velocity along terrain ---
   const gravityAccel = -PHYSICS.GRAVITY * Math.sin(slope);
   const frictionDecel = state.vx > 0 ? -PHYSICS.GRAVITY * 0.05 : PHYSICS.GRAVITY * 0.05;
 
-  // Player speed control (up/down arrows) — strong enough to climb hills
+  // Player speed control (up/down arrows)
   const ACCEL_FORCE = 1200;
   const playerAccel = (input.accel || 0) * ACCEL_FORCE;
 
@@ -96,19 +105,38 @@ function updateOnTerrain(dt, input) {
   state.vx *= PHYSICS.FRICTION;
   state.vx = clamp(state.vx, diff.minSpeed, PHYSICS.MAX_VELOCITY);
 
-  // Move along terrain — rider sticks to the line at all times
+  // --- Hill launch detection ---
+  // Project where rider would go following the current terrain tangent.
+  // If momentum carries them above the terrain (convex hill crest), launch.
+  const projDist = state.vx * PHYSICS.LAUNCH_LOOKAHEAD;
+  const projX = state.x + projDist * Math.cos(slope);
+  const projY = state.y + projDist * Math.sin(slope);
+  const futureTerrain = getTerrainAt(state.collisionData, projX);
+  const heightAbove = projY - futureTerrain.y;
+
+  if (heightAbove > PHYSICS.LAUNCH_THRESHOLD && slope > -0.15) {
+    // Natural hill launch — rider flies off with tangent velocity
+    state.riderState = RIDER_STATES.AIRBORNE;
+    const speed = state.vx;
+    state.vx = speed * Math.cos(slope);
+    state.vy = speed * Math.sin(slope);
+    // Advance position for this frame
+    state.x += state.vx * dt;
+    state.y += state.vy * dt;
+    state.airTime = 0;
+    return;
+  }
+
+  // --- Stay on terrain (magnetic stick) ---
   state.x += state.vx * Math.cos(slope) * dt;
   const newTerrain = getTerrainAt(state.collisionData, state.x);
   state.y = newTerrain.y;
-  state.rotation = newTerrain.slope;
 
-  // Only detach on explicit jump
+  // Manual jump (space bar) — always available as escape hatch
   if (input.jump) {
     state.riderState = RIDER_STATES.AIRBORNE;
     state.vy = PHYSICS.JUMP_FORCE;
-    // Preserve horizontal velocity
-    const speed = state.vx;
-    state.vx = speed * Math.cos(state.rotation);
+    state.vx = state.vx * Math.cos(slope);
     state.airTime = 0;
   }
 }
@@ -118,14 +146,13 @@ function updateAirborne(dt, input) {
   state.vy -= PHYSICS.GRAVITY * dt;
   state.vy = clamp(state.vy, -2000, 2000);
 
-  // Update position (velocity is unaffected by lean)
+  // Update position
   state.x += state.vx * dt;
   state.y += state.vy * dt;
 
-  // Air control: lean rotates the rider for leveling.
-  // Rotation is fully player-controlled — it stays where you put it.
+  // Board rotation: player-controlled, same speed as on terrain
   if (input.lean && input.lean !== 0) {
-    state.rotation += input.lean * input.airRotateSpeed * dt;
+    state.rotation += input.lean * PHYSICS.BOARD_ROTATE_SPEED * dt;
   }
 
   // Track air time
@@ -136,9 +163,8 @@ function updateAirborne(dt, input) {
     return;
   }
 
-  // Magnet landing: once past the initial jump arc, snap back to the
-  // line when close. Uses a generous snap distance so downslopes
-  // don't let the rider float above forever.
+  // Magnetic landing: once past the jump apex, snap back to the
+  // line when close. Prevents floating above downslopes.
   const terrain = getTerrainAt(state.collisionData, state.x);
   const distAbove = state.y - terrain.y;
   const pastApex = state.vy < 0;
@@ -156,7 +182,7 @@ function updateAirborne(dt, input) {
 function handleLanding(terrain) {
   const diff = getDifficulty();
 
-  // Magnet landing: snap onto the line. Only die from extreme impact.
+  // Death from extreme impact
   const impactForce = Math.abs(state.vy);
   if (impactForce > PHYSICS.LANDING_IMPACT_DEATH) {
     state.riderState = RIDER_STATES.DEAD;
@@ -164,13 +190,14 @@ function handleLanding(terrain) {
     return;
   }
 
-  // Head-first death: if rider is roughly upside-down, they landed on their head
-  const angleMismatch = Math.abs(state.rotation - terrain.slope);
-  if (angleMismatch > Math.PI / 2) {
+  // Death from landing upside-down (must be nearly inverted, not just sideways)
+  const angleMismatch = Math.abs(angleBetween(state.rotation, terrain.slope));
+  if (angleMismatch > PHYSICS.LANDING_ANGLE_DEATH) {
     state.riderState = RIDER_STATES.DEAD;
     state.deathCause = 'Landed on your head';
     return;
   }
+
   const landingSpeed = vectorMagnitude(state.vx, state.vy);
   const penalty = clamp(1 - angleMismatch * 0.8, 0.3, 1);
 
