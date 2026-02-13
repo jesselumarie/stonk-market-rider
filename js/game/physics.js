@@ -190,9 +190,9 @@ function handleLanding(terrain) {
     return;
   }
 
-  // Death from landing upside-down
+  // Death from landing upside-down (must be nearly inverted, not just sideways)
   const angleMismatch = Math.abs(angleBetween(state.rotation, terrain.slope));
-  if (angleMismatch > Math.PI / 2) {
+  if (angleMismatch > PHYSICS.LANDING_ANGLE_DEATH) {
     state.riderState = RIDER_STATES.DEAD;
     state.deathCause = 'Landed on your head';
     return;

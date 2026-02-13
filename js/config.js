@@ -4,6 +4,7 @@ export const PHYSICS = {
   FRICTION: 0.98,
   JUMP_FORCE: 450,
   LANDING_ANGLE_TOLERANCE: 0.4,
+  LANDING_ANGLE_DEATH: 2.2,      // ~126° — must be nearly upside-down to die on landing
   LANDING_IMPACT_DEATH: 1400,
   AIRTIME_DEATH_SECONDS: 4,
 
