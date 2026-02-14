@@ -14,7 +14,7 @@ const SPRITE_STATES = {
 
 const SPEED_THRESHOLD_CROUCH = 400;
 const JUMP_COOLDOWN = 300; // ms
-const AIR_ROTATE_SPEED = 3.0; // radians per second
+const AIR_ROTATE_SPEED = 8.0; // radians per second (fast enough to flip in a single jump)
 
 let lastJumpTime = 0;
 let jumpPressed = false;

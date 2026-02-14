@@ -150,9 +150,10 @@ function updateAirborne(dt, input) {
   state.x += state.vx * dt;
   state.y += state.vy * dt;
 
-  // Board rotation: player-controlled, same speed as on terrain
+  // Board rotation: player-controlled, faster in air for flips
+  const airSpeed = input.airRotateSpeed || PHYSICS.BOARD_ROTATE_SPEED;
   if (input.lean && input.lean !== 0) {
-    state.rotation += input.lean * PHYSICS.BOARD_ROTATE_SPEED * dt;
+    state.rotation += input.lean * airSpeed * dt;
   }
 
   // Track air time
