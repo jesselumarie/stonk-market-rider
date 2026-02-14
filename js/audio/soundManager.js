@@ -367,6 +367,46 @@ function playProceduralScream() {
   noiseSrc.stop(t + duration);
 }
 
+export function playFlipSick() {
+  if (!initialized) return;
+  const t = audioCtx.currentTime;
+
+  // Ascending power chord — three notes staggered
+  [400, 500, 600].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t + i * 0.04);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, t + i * 0.04 + 0.15);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(0.18, t + i * 0.04 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(t + i * 0.04);
+    osc.stop(t + 0.5);
+  });
+
+  // Bright whoosh sweep
+  const sweep = audioCtx.createOscillator();
+  const sweepGain = audioCtx.createGain();
+  sweep.type = 'sawtooth';
+  sweep.frequency.setValueAtTime(200, t);
+  sweep.frequency.exponentialRampToValueAtTime(1200, t + 0.2);
+  sweep.frequency.exponentialRampToValueAtTime(800, t + 0.35);
+  sweepGain.gain.setValueAtTime(0.15, t);
+  sweepGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  const sweepFilter = audioCtx.createBiquadFilter();
+  sweepFilter.type = 'bandpass';
+  sweepFilter.frequency.value = 1000;
+  sweepFilter.Q.value = 0.8;
+  sweep.connect(sweepFilter);
+  sweepFilter.connect(sweepGain);
+  sweepGain.connect(masterGain);
+  sweep.start(t);
+  sweep.stop(t + 0.45);
+}
+
 export function stopAllSounds() {
   stopPencilLoop();
   stopWindLoop();

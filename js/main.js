@@ -11,7 +11,7 @@ import { initCamera, updateCamera } from './game/camera.js';
 import {
   initAudio, resumeAudio, startPencilLoop, stopPencilLoop,
   updatePencilVolume, startWindLoop, stopWindLoop, updateWindVolume,
-  playJump, playLandClean, playDeathSting, playWilhelmScream, stopAllSounds,
+  playJump, playLandClean, playDeathSting, playWilhelmScream, playFlipSick, stopAllSounds,
 } from './audio/soundManager.js';
 import { fetchStockData, generateSampleData } from './data/stockApi.js';
 import { initStockPicker, showError, clearError, setTickerFromURL } from './ui/stockPicker.js';
@@ -32,6 +32,12 @@ let currentTicker = '';
 let currentCompany = '';
 let currentTimeframe = '1Y';
 let previousRiderState = RIDER_STATES.ON_TERRAIN;
+
+// Flip detection
+let flipCumulativeRotation = 0;
+let flipCount = 0;
+const flipFlashEl = document.getElementById('flip-flash');
+let flipFlashTimeout = null;
 
 // --- DOM Elements ---
 const canvas = document.getElementById('game-canvas');
@@ -349,8 +355,20 @@ function gameLoop(timestamp) {
 
     // Update rider sprite
     const spriteState = getSpriteState(phys);
+    const prevRotation = riderRotation;
     riderRotation = getRiderRotation(phys, dt, riderRotation);
     updateRiderSprite(spriteState, phys.x, phys.y, riderRotation);
+
+    // Flip detection while airborne
+    if (phys.riderState === RIDER_STATES.AIRBORNE) {
+      const delta = riderRotation - prevRotation;
+      flipCumulativeRotation += delta;
+      const fullFlips = Math.floor(Math.abs(flipCumulativeRotation) / (Math.PI * 2));
+      if (fullFlips > flipCount) {
+        flipCount = fullFlips;
+        triggerFlipFlash();
+      }
+    }
 
     // Update camera
     updateCamera(getCamera(), phys.x, phys.y, currentTerrain.controlPoints, dt, false);
@@ -381,6 +399,22 @@ function onRiderStateChange(from, to) {
     // Clean landing
     playLandClean();
   }
+  // Reset flip tracking on any state transition
+  flipCumulativeRotation = 0;
+  flipCount = 0;
+}
+
+function triggerFlipFlash() {
+  playFlipSick();
+  // Restart the CSS animation by toggling the class
+  flipFlashEl.classList.remove('active');
+  // Force reflow to restart animation
+  void flipFlashEl.offsetWidth;
+  flipFlashEl.classList.add('active');
+  clearTimeout(flipFlashTimeout);
+  flipFlashTimeout = setTimeout(() => {
+    flipFlashEl.classList.remove('active');
+  }, 900);
 }
 
 function onDeath(physicsState) {
